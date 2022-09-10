@@ -9,35 +9,12 @@ public class TicTacToe {
     // 79 chars
     private static String chars = "abcdefghijklmnopqrstuvwxyz!#^&*()-_=+{}[]|:;<>.?/ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static String[] playerChars = {"X","O","%","§","╬","©","¶","¾","@","$"};
-    private static Integer playerCount = 5;
-    private static Integer boardLength = 9;
-    private static Integer boardHeight = 9;
+    private static Integer playerCount = 10;
+    private static Integer boardLength = 75;
+    private static Integer boardHeight = 75;
 
     public static void main(String[] args) throws IOException {
-        ServerSocket server = new ServerSocket(8080);
-        System.out.println("Listening for connection on port 8080 ....");
-        int connections = 0;
-        while (true) {
-            try (Socket socket = server.accept()) {
-                System.out.println("*********************");
-                InputStream input = socket.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-                String line = reader.readLine();
-                System.out.println(line);
-                Date today = new Date();
-                connections++;
-                File crunchifyFile = new File("index.html");
-                FileInputStream fileInputStream;
-                fileInputStream = new FileInputStream(crunchifyFile);
-                byte[] crunchifyValue = new byte[(int) crunchifyFile.length()];
-                fileInputStream.read(crunchifyValue);
-                fileInputStream.close();
-                String fileContent = new String(crunchifyValue, "UTF-8");
-                String httpResponse = "HTTP/1.1 200 OK\r\n\r\n" + fileContent;
-                socket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
-            }
-        }
-        /*if(boardLength > chars.length()) {
+        if(boardLength > chars.length()) {
             System.out.println("Your board is too wide");
             System.exit(69);
         }
@@ -171,6 +148,6 @@ public class TicTacToe {
                 return value;
             }
         }
-        return "#";*/
+        return "#";
     }
 }
