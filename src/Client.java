@@ -3,6 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -93,6 +94,8 @@ public class Client {
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException{
         //CONNECTION VARS
         InetAddress host = InetAddress.getLocalHost();
+        byte[] ipAddr = new byte[] {(byte) 172,18,0,54};
+        InetAddress host = InetAddress.getByAddress(ipAddr);
         Socket socket = null;
         ObjectOutputStream oos = null;
         ObjectInputStream ois = null;
@@ -104,8 +107,8 @@ public class Client {
         System.out.print("Enter name: ");
         String name = s.nextLine();
         while (true) {
-            socket = new Socket(host.getHostName(), 9876);
-
+            socket = new Socket(host.getHostName(), 8080);
+            System.out.println("Socket connecting to port " + socket.getPort() + " at " + socket.getInetAddress().getHostName());
             //READ
             ois = new ObjectInputStream(socket.getInputStream());
             message = (TicTacToeMessage) ois.readObject();
