@@ -3,7 +3,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.URL;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -93,94 +93,99 @@ public class Client {
     }
     public static void main(String[] args) throws UnknownHostException, IOException, ClassNotFoundException, InterruptedException{
         //CONNECTION VARS
-        InetAddress host = InetAddress.getLocalHost();
-        byte[] ipAddr = new byte[] {(byte) 172,18,0,54};
-        InetAddress host = InetAddress.getByAddress(ipAddr);
+        InetAddress host = InetAddress.getByName("TicTacToeServer.matthewbevins.repl.co");
         Socket socket = null;
         ObjectOutputStream oos = null;
         ObjectInputStream ois = null;
         TicTacToeMessage message = null;
-
         //GAME VARS
         int playerNum = 1;
         boolean joinedGame = false;
         System.out.print("Enter name: ");
         String name = s.nextLine();
         while (true) {
-            socket = new Socket(host.getHostName(), 8080);
-            System.out.println("Socket connecting to port " + socket.getPort() + " at " + socket.getInetAddress().getHostName());
-            //READ
-            ois = new ObjectInputStream(socket.getInputStream());
-            message = (TicTacToeMessage) ois.readObject();
-
-            //JOIN GAME IF NEEDED
-            if (! joinedGame) {
-                message.playerArr[message.playerArrIndex] = name;
-                message.playerArrIndex++;
-                playerNum = message.playerArrIndex;
-                joinedGame = true;
-                if (playerNum == 1) {
-                    System.out.print("Enter total players: ");
-                    message.totalPlayers = s.nextInt();
-                    System.out.print("Enter board width: ");
-                    int wid = s.nextInt();
-                    System.out.print("Enter board height: ");
-                    int hei = s.nextInt();
-                    message.board = new String[wid][hei];
-                    for(int i = 0; i < hei; i++) {
-                        for(int j = 0; j < wid; j++) {
-                            message.board[i][j] = "#";
+            System.out.println(host.getHostName());
+            System.out.println("Connecting...");
+            try {
+                socket = new Socket(host.getHostName(), 8081);
+                //READ
+                ois = new ObjectInputStream(socket.getInputStream());
+                message = (TicTacToeMessage) ois.readObject();
+                //JOIN GAME IF NEEDED
+                if (! joinedGame) {
+                    System.out.println(Arrays.toString(message.playerArr));
+                    message.playerArr[message.playerArrIndex] = name;
+                    message.playerArrIndex++;
+                    playerNum = message.playerArrIndex;
+                    joinedGame = true;
+                    if (playerNum == 1) {
+                        System.out.print("Enter total players: ");
+                        message.totalPlayers = s.nextInt();
+                        System.out.print("Enter board width: ");
+                        int wid = s.nextInt();
+                        System.out.print("Enter board height: ");
+                        int hei = s.nextInt();
+                        message.board = new String[wid][hei];
+                        for(int i = 0; i < hei; i++) {
+                            for(int j = 0; j < wid; j++) {
+                                message.board[i][j] = "#";
+                            }
                         }
                     }
+                    System.out.println(message.playerArrIndex);
+                    System.out.println("Waiting for more players...");
                 }
-                System.out.println("Waiting for more players...");
-            }
 
-            //START GAME
-            if (message.playerArrIndex == message.totalPlayers) {
-                message.started = true;
-            }
+                //START GAME
+                if (message.playerArrIndex == message.totalPlayers) {
+                    message.started = true;
+                }
 
-            //END GAME
-            if (message.gameOver) {
-                System.out.println("YOU LOSE. THE WINNER WAS " + message.winner);
-                break;
-            }
+                //END GAME
+                if (message.gameOver) {
+                    System.out.println("YOU LOSE. THE WINNER WAS " + message.winner);
+                    break;
+                }
 
-            //GAME
-            if (message.started && message.turn == playerNum) {
-                printBoard(message.board);
-                boolean validMove = false;
-                int row = 0;
-                int col = 0;
-                while (! validMove) {
-                    System.out.print("Enter position choice: ");
-                    String choice = s.next();
-                    col = chars.indexOf(choice.charAt(0));
-                    row = Integer.parseInt(choice.substring(1))-1;
-                    if (Objects.equals(message.board[row][col], "#")) {
-                        validMove = true;
+                //GAME
+                if (message.started && message.turn == playerNum) {
+                    printBoard(message.board);
+                    boolean validMove = false;
+                    int row = 0;
+                    int col = 0;
+                    while (! validMove) {
+                        System.out.print("Enter position choice: ");
+                        String choice = s.next();
+                        col = chars.indexOf(choice.charAt(0));
+                        row = Integer.parseInt(choice.substring(1))-1;
+                        if (Objects.equals(message.board[row][col], "#")) {
+                            validMove = true;
+                        }
+                    }
+                    message.board[row][col] = playerSymbols[playerNum-1];
+                    message.turn++;
+                    if (message.turn > message.totalPlayers) {
+                        message.turn = 1;
+                    }
+                    System.out.println("Waiting for next player to move...");
+                    if (!Objects.equals(checkWin(message.board), "#")) {
+                        message.gameOver = true;
+                        message.winner = checkWin(message.board);
+                        System.out.println("YOU WON!");
                     }
                 }
-                message.board[row][col] = playerSymbols[playerNum-1];
-                message.turn++;
-                if (message.turn > message.totalPlayers) {
-                    message.turn = 1;
-                }
-                System.out.println("Waiting for next player to move...");
-                if (!Objects.equals(checkWin(message.board), "#")) {
-                    message.gameOver = true;
-                    message.winner = checkWin(message.board);
-                    System.out.println("YOU WON!");
-                }
+
+                //WRITE
+                oos = new ObjectOutputStream(socket.getOutputStream());
+                oos.writeObject(message);
+
+                ois.close();
+                oos.close();
+
             }
+            catch(SocketException s) {
 
-            //WRITE
-            oos = new ObjectOutputStream(socket.getOutputStream());
-            oos.writeObject(message);
-
-            ois.close();
-            oos.close();
+            }
             Thread.sleep(1000);
         }
     }
