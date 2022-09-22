@@ -1,6 +1,4 @@
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -102,17 +100,23 @@ public class Client {
         int playerNum = 1;
         boolean joinedGame = false;
         System.out.print("Enter name: ");
-        String name = s.nextLine();
+        String name = "name";//s.nextLine();
         while (true) {
             System.out.println(host.getHostName());
             System.out.println("Connecting...");
             try {
-                socket = new Socket(host.getHostName(), 8081);
+                socket = new Socket(host.getHostName(), 443);
+                System.out.println(socket.isConnected());
                 //READ
-                ois = new ObjectInputStream(socket.getInputStream());
-                message = (TicTacToeMessage) ois.readObject();
+                BufferedInputStream inputS = new BufferedInputStream(socket.getInputStream());
+                byte[] buffer = new byte[1024];    //If you handle larger data use a bigger buffer size
+                int read;
+                while((read = inputS.read(buffer)) != -1) {
+                    System.out.println(read);
+                    // Your code to handle the data
+                }
                 //JOIN GAME IF NEEDED
-                if (! joinedGame) {
+                /*if (! joinedGame) {
                     System.out.println(Arrays.toString(message.playerArr));
                     message.playerArr[message.playerArrIndex] = name;
                     message.playerArrIndex++;
@@ -173,14 +177,7 @@ public class Client {
                         message.winner = checkWin(message.board);
                         System.out.println("YOU WON!");
                     }
-                }
-
-                //WRITE
-                oos = new ObjectOutputStream(socket.getOutputStream());
-                oos.writeObject(message);
-
-                ois.close();
-                oos.close();
+                }*/
 
             }
             catch(SocketException s) {
